@@ -10,6 +10,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
+/**
+ * Ventana principal de la aplicación.
+ * Define la estructura visual (Layout), la barra de menús y la gestión
+ * de eventos de usuario para el control de tareas.
+ */
 public class MainFrame extends JFrame {
     private TaskManager taskManager;
     private DefaultListModel<Task> listModel;
@@ -17,6 +22,9 @@ public class MainFrame extends JFrame {
     private ControlPanel controlPanel;
     private StatusPanel statusPanel;
     
+    /**
+     * Constructor que inicializa el gestor de datos y configura la interfaz.
+     */
     public MainFrame() {
         taskManager = TaskManager.getInstance();
         initComponents();
@@ -25,44 +33,53 @@ public class MainFrame extends JFrame {
         loadTasks();
     }
     
+    /**
+     * Instancia y organiza los componentes visuales básicos.
+     * Utiliza un BorderLayout para dividir la aplicación en zonas (Control, Lista, Estado).
+     */
     private void initComponents() {
-        // Configurar modelo y lista
+        // Configuración del modelo de datos para la JList
         listModel = new DefaultListModel<>();
         taskList = new JList<>(listModel);
+        
+        // Se asigna el renderizador personalizado para cambiar la apariencia de las celdas
         taskList.setCellRenderer(new TaskListRenderer());
         taskList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         
-        // Crear paneles
         controlPanel = new ControlPanel();
         statusPanel = new StatusPanel();
         
-        // Configurar layout principal
         setLayout(new BorderLayout(10, 10));
         
-        // Panel de lista con scroll
+        // Implementación de scroll para la lista de tareas
         JScrollPane scrollPane = new JScrollPane(taskList);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Lista de Tareas"));
         
-        // Agregar componentes al frame
         add(controlPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(statusPanel, BorderLayout.SOUTH);
     }
     
+    /**
+     * Define las propiedades básicas del JFrame (tamaño, cierre, título).
+     */
     private void setupFrame() {
         setTitle("Gestor de Tareas - Proyecto Base Java");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(null); // Centra la ventana en pantalla
         
-        // Crear menú
         setupMenuBar();
     }
     
+    /**
+     * Configura la barra de menú superior, sus mnemónicos (atajos Alt) 
+     * y aceleradores (Ctrl+Key).
+     */
     private void setupMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         
-        // Menú Archivo
+        // --- Menú Archivo ---
         JMenu fileMenu = new JMenu("Archivo");
         fileMenu.setMnemonic(KeyEvent.VK_A);
         
@@ -80,7 +97,7 @@ public class MainFrame extends JFrame {
         fileMenu.addSeparator();
         fileMenu.add(exitItem);
         
-        // Menú Tareas
+        // --- Menú Tareas ---
         JMenu taskMenu = new JMenu("Tareas");
         taskMenu.setMnemonic(KeyEvent.VK_T);
         
@@ -93,7 +110,7 @@ public class MainFrame extends JFrame {
         taskMenu.add(completeItem);
         taskMenu.add(deleteItem);
         
-        // Menú Ayuda
+        // --- Menú Ayuda ---
         JMenu helpMenu = new JMenu("Ayuda");
         helpMenu.setMnemonic(KeyEvent.VK_H);
         
@@ -108,7 +125,7 @@ public class MainFrame extends JFrame {
         
         setJMenuBar(menuBar);
         
-        // Listeners del menú
+        // Listeners del menú asociados a métodos específicos
         newItem.addActionListener(e -> showAddTaskDialog());
         exitItem.addActionListener(e -> System.exit(0));
         completeItem.addActionListener(e -> completeSelectedTask());
@@ -116,41 +133,41 @@ public class MainFrame extends JFrame {
         aboutItem.addActionListener(e -> showAboutDialog());
     }
     
+    /**
+     * Conecta las acciones de los botones en los paneles con la lógica del MainFrame.
+     */
     private void setupListeners() {
-        // Botón Nueva Tarea
         controlPanel.getAddButton().addActionListener(e -> showAddTaskDialog());
-        
-        // Botón Marcar Completada
         controlPanel.getCompleteButton().addActionListener(e -> completeSelectedTask());
-        
-        // Botón Eliminar
         controlPanel.getDeleteButton().addActionListener(e -> deleteSelectedTask());
-        
-        // Botón Ver Detalles
         controlPanel.getDetailsButton().addActionListener(e -> showTaskDetails());
-        
-        // Botón Actualizar
         controlPanel.getRefreshButton().addActionListener(e -> refreshTaskList());
         
-        // Doble clic en la lista
+        // Manejo de eventos de ratón para facilitar la navegación
         taskList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (evt.getClickCount() == 2) {
+                if (evt.getClickCount() == 2) { // Doble clic para ver detalle
                     showTaskDetails();
                 }
             }
         });
     }
     
+    /**
+     * Sincroniza los datos del TaskManager con el listModel de la interfaz gráfica.
+     */
     private void loadTasks() {
         listModel.clear();
         for (Task task : taskManager.getAllTasks()) {
             listModel.addElement(task);
         }
-        statusPanel.updateStats();
+        statusPanel.updateStats(); // Actualiza contadores en el pie de página
     }
     
-    
+    /**
+     * Elimina todas las tareas previa confirmación del usuario mediante un diálogo.
+     */
     private void clearAllTasks() {
         int confirm = JOptionPane.showConfirmDialog(
             this,
@@ -167,6 +184,10 @@ public class MainFrame extends JFrame {
         }
     }
     
+    /**
+     * Muestra un formulario modal para la creación de una nueva tarea.
+     * Valida que el campo título no esté vacío antes de guardar.
+     */
     private void showAddTaskDialog() {
         JTextField titleField = new JTextField(20);
         JTextArea descArea = new JTextArea(5, 20);
@@ -179,7 +200,6 @@ public class MainFrame extends JFrame {
         panel.add(new JLabel("Descripción:"));
         panel.add(new JScrollPane(descArea));
         
-        // Añadir padding al panel
         JPanel container = new JPanel(new BorderLayout());
         container.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         container.add(panel, BorderLayout.CENTER);
@@ -200,20 +220,21 @@ public class MainFrame extends JFrame {
                 Task task = new Task(title, description);
                 taskManager.addTask(task);
                 loadTasks();
-                JOptionPane.showMessageDialog(this, "Tarea agregada exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(this, "El título es requerido", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
     
+    /**
+     * Marca la tarea seleccionada en la lista como completada.
+     */
     private void completeSelectedTask() {
         Task selected = taskList.getSelectedValue();
         if (selected != null) {
             if (!selected.isCompleted()) {
                 taskManager.markTaskCompleted(selected.getId());
                 loadTasks();
-                JOptionPane.showMessageDialog(this, "Tarea marcada como completada", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(this, "La tarea ya está completada", "Información", JOptionPane.INFORMATION_MESSAGE);
             }
@@ -222,6 +243,9 @@ public class MainFrame extends JFrame {
         }
     }
     
+    /**
+     * Elimina la tarea seleccionada tras confirmar con el usuario.
+     */
     private void deleteSelectedTask() {
         Task selected = taskList.getSelectedValue();
         if (selected != null) {
@@ -236,7 +260,6 @@ public class MainFrame extends JFrame {
             if (confirm == JOptionPane.YES_OPTION) {
                 if (taskManager.removeTask(selected.getId())) {
                     loadTasks();
-                    JOptionPane.showMessageDialog(this, "Tarea eliminada", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 } else {
                     JOptionPane.showMessageDialog(this, "Error al eliminar la tarea", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -246,6 +269,9 @@ public class MainFrame extends JFrame {
         }
     }
     
+    /**
+     * Abre un diálogo de detalle para la tarea seleccionada.
+     */
     private void showTaskDetails() {
         Task selected = taskList.getSelectedValue();
         if (selected != null) {
@@ -256,44 +282,35 @@ public class MainFrame extends JFrame {
         }
     }
     
+    /**
+     * Fuerza la recarga de los datos en la UI.
+     */
     private void refreshTaskList() {
         loadTasks();
         JOptionPane.showMessageDialog(this, "Lista actualizada", "Información", JOptionPane.INFORMATION_MESSAGE);
     }
     
+    /**
+     * Muestra información sobre el software y sus versiones.
+     */
     private void showAboutDialog() {
         String aboutText = "<html>" +
             "<h2>Gestor de Tareas v1.1</h2>" +
-            "<p>Proyecto Java para gestión de tareas - Versión Corregida</p>" +
-            "<p><b>Correcciones:</b></p>" +
-            "<ul>" +
-            "<li>IDs únicos usando UUID</li>" +
-            "<li>Eliminación individual de tareas corregida</li>" +
-            "<li>Manejo mejorado de tareas de muestra</li>" +
-            "</ul>" +
-            "<hr>" +
-            "<p><small>© 2024 - Proyecto Base para Ingeniería de Software</small></p>" +
+            "<p>Proyecto Java para gestión de tareas</p>" +
             "</html>";
         
-        JOptionPane.showMessageDialog(
-            this,
-            aboutText,
-            "Acerca de",
-            JOptionPane.INFORMATION_MESSAGE
-        );
+        JOptionPane.showMessageDialog(this, aboutText, "Acerca de", JOptionPane.INFORMATION_MESSAGE);
     }
     
+    /**
+     * Ejecuta la visibilidad del Frame de forma segura en el Event Dispatch Thread de Swing.
+     */
     public void showFrame() {
         SwingUtilities.invokeLater(() -> {
             try {
                 setVisible(true);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(
-                    null,
-                    "Error al mostrar la ventana: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-                );
+                JOptionPane.showMessageDialog(null, "Error crítico: " + e.getMessage());
             }
         });
     }
