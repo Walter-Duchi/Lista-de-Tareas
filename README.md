@@ -1,175 +1,221 @@
-# 📝 Gestor de Tareas - Java
+# Gestor de Tareas — Java Swing
 
-¡Hola! 👋 Bienvenido al **Gestor de Tareas**, una aplicación super fácil de usar para organizar tus tareas diarias. ¡Es perfecta para estudiantes, profesionales, o cualquier persona que quiera mantenerse organizada!
-
----
-
-## ✨ ¿Qué es este proyecto?
-
-Imagina que tienes una **lista de cosas por hacer** en tu cabeza: "estudiar para el examen", "comprar leche", "llamar a mamá". ¡Esta aplicación te ayuda a anotarlas todas para que no se te olvide nada!
-
-### 🎯 ¿Qué hace esta aplicación?
-- ✅ **Agregar nuevas tareas** (con título y descripción)
-- ✅ **Marcar tareas como completadas** (¡tacharlas cuando las termines!)
-- ✅ **Ver detalles de cada tarea**
-- ✅ **Eliminar tareas** que ya no necesites
-- ✅ **Ver estadísticas** (cuántas tareas tienes, cuántas completadas)
-- ✅ **Interfaz bonita y fácil de usar** (se ve como los programas de tu computadora)
+Aplicación de escritorio para gestión de tareas personales, desarrollada en Java con interfaz gráfica Swing. Implementa patrones de diseño clásicos (Singleton, MVC), separación en capas, renderizadores personalizados de listas y un conjunto de pruebas unitarias con JUnit 4. El proyecto está gestionado con Maven y compilado para Java 11.
 
 ---
 
-## 🚀 ¿Cómo empiezo a usarla?
+## Tabla de contenidos
 
-### Para usuarios normales (quiero usar el programa):
-1. **Descarga el programa** (busca el archivo .jar)
-2. **Haz doble clic** en el archivo (como cualquier programa)
-3. ¡Listo! Ya puedes empezar a agregar tus tareas
-
-### Para desarrolladores (quiero ver cómo está hecho):
-Si eres curioso y quieres ver cómo funciona por dentro:
-
-#### Requisitos:
-- **Java 11** o superior (puedes descargarlo gratis)
-- **Maven** (una herramienta para construir programas en Java)
-
-#### Pasos:
-1. **Descarga o clona este proyecto**
-2. **Abre una terminal** en la carpeta del proyecto
-3. **Ejecuta:** `mvn clean compile`
-4. **Luego ejecuta:** `mvn exec:java -Dexec.mainClass="org.wadr.App"`
-5. ¡La aplicación debería aparecer! 🎉
+- [Descripción general](#descripción-general)
+- [Tecnologías y patrones utilizados](#tecnologías-y-patrones-utilizados)
+- [Arquitectura del proyecto](#arquitectura-del-proyecto)
+- [Requisitos previos](#requisitos-previos)
+- [Compilación y ejecución](#compilación-y-ejecución)
+- [Ejecutar las pruebas](#ejecutar-las-pruebas)
+- [Funcionalidades principales](#funcionalidades-principales)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Preguntas frecuentes](#preguntas-frecuentes)
+- [Autor](#autor)
 
 ---
 
-## 📂 ¿Cómo está organizado el proyecto?
+## Descripción general
 
-El proyecto está dividido en carpetas, como los cajones de un escritorio:
+Este proyecto es un gestor de tareas de escritorio que permite al usuario crear, visualizar, completar y eliminar tareas mediante una interfaz gráfica construida con Java Swing. La aplicación arranca con un conjunto de tareas de muestra precargadas y mantiene el estado en memoria durante la sesión.
+
+El objetivo del proyecto fue aplicar de forma práctica principios de diseño orientado a objetos en Java: separación de responsabilidades en capas (modelo, servicio, UI), el patrón Singleton para la gestión centralizada del estado, y la escritura de pruebas unitarias que validan el comportamiento del núcleo de negocio de forma independiente a la interfaz gráfica.
+
+---
+
+## Tecnologías y patrones utilizados
+
+### Tecnologías
+| Tecnología | Versión | Propósito |
+|---|---|---|
+| Java | 11 | Lenguaje base de la aplicación |
+| Java Swing + AWT | JDK 11 | Framework de interfaz gráfica de escritorio |
+| Maven | 3.x | Gestión de dependencias, compilación y empaquetado |
+| JUnit | 4.13.2 | Framework de pruebas unitarias |
+| Hamcrest | 3.0 | Matchers expresivos para aserciones en tests |
+| Apache Commons Lang | 3.20.0 | Utilidades de strings y objetos |
+
+### Patrones de diseño aplicados
+| Patrón | Dónde se aplica |
+|---|---|
+| Singleton | `TaskManager`: instancia única del gestor de tareas con acceso thread-safe mediante `synchronized` |
+| MVC (Model-View-Controller) | Separación en paquetes `model`, `service` y `ui` |
+| Renderer personalizado | `TaskListRenderer`: control visual de cada celda de la `JList` según el estado de la tarea |
+| Event Dispatch Thread (EDT) | Toda la UI se inicializa dentro de `SwingUtilities.invokeLater()` para garantizar la seguridad de hilos de Swing |
+
+---
+
+## Arquitectura del proyecto
 
 ```
-GestorDeTareas/
-├── 📁 src/main/java/org/wadr/
-│   ├── 📄 App.java              # ⚡ ¡Aquí empieza todo! El motor principal
-│   ├── 📁 model/                # 📦 Aquí están las "cosas" (las tareas)
-│   │   └── Task.java           # 📝 La plantilla de una tarea
-│   ├── 📁 service/              # 🛠️ El cerebro de la aplicación
-│   │   └── TaskManager.java    # 🧠 Maneja todas las tareas
-│   ├── 📁 ui/                   # 🎨 Todo lo que se ve en pantalla
-│   │   ├── MainFrame.java      # 🪟 La ventana principal
-│   │   ├── 📁 components/      # 🔧 Piezas pequeñas de la interfaz
-│   │   ├── 📁 dialogs/         # 🪟 Ventanas emergentes
-│   │   └── 📁 panels/          # 🧩 Secciones de la ventana
-│   └── 📁 utils/                # 🧰 Herramientas útiles
-│       └── FormatterUtil.java  # ✨ Da formato bonito a las fechas
-└── 📄 pom.xml                   # 📦 Instrucciones para construir el proyecto
+App.java (punto de entrada)
+    │
+    └── SwingUtilities.invokeLater()
+              │
+         MainFrame (JFrame)
+              │
+    ┌─────────┼──────────────┐
+    │         │              │
+ControlPanel  JList       StatusPanel
+(inputs y     (TaskListRenderer)  (estadísticas)
+ botones)          │
+              TaskDetailDialog
+              (diálogo de detalle)
+                   │
+              TaskManager (Singleton)
+                   │
+              List<Task> (en memoria)
+```
+
+La capa de servicio (`TaskManager`) es completamente independiente de la UI. Esto permite que las pruebas unitarias en `AppTest` ejerciten toda la lógica de negocio sin necesidad de instanciar ningún componente gráfico.
+
+---
+
+## Requisitos previos
+
+- [Java JDK 11](https://adoptium.net/) o superior
+- [Apache Maven](https://maven.apache.org/download.cgi) 3.6 o superior
+
+Verificar las instalaciones:
+
+```bash
+java -version
+mvn -version
 ```
 
 ---
 
-## 🎮 ¿Cómo uso la aplicación?
+## Compilación y ejecución
 
-Es tan fácil como 1-2-3:
+### 1. Clonar el repositorio
 
-### 1. **Agregar una nueva tarea**
-   - Haz clic en el botón **"＋ Nueva Tarea"**
-   - Escribe un título (ej: "Comprar pan")
-   - Agrega una descripción si quieres (ej: "En la panadería de la esquina")
-   - ¡Listo! Aparecerá en tu lista
+```bash
+git clone https://github.com/Walter-Duchi/Lista-de-Tareas.git
+cd Lista-de-Tareas
+```
 
-### 2. **Marcar una tarea como completada**
-   - Selecciona una tarea de la lista
-   - Haz clic en **"✓ Completar"**
-   - ¡La tarea se marcará con un check! ✅
+### 2. Compilar el proyecto
 
-### 3. **Ver detalles de una tarea**
-   - Selecciona una tarea
-   - Haz clic en **"🔍 Detalles"**
-   - O simplemente **haz doble clic** en la tarea
-   - ¡Verás toda la información!
+```bash
+mvn compile
+```
 
-### 4. **Eliminar una tarea**
-   - Selecciona la tarea que quieres eliminar
-   - Haz clic en **"✗ Eliminar"**
-   - Confirma que quieres eliminarla
-   - ¡Desaparecerá de tu lista!
+### 3. Ejecutar la aplicación
 
----
+```bash
+mvn exec:java -Dexec.mainClass="org.wadr.App"
+```
 
-## 🤝 ¡Quiero ayudar a mejorar el proyecto!
+O compilar el JAR ejecutable y lanzarlo directamente:
 
-¡Me encantaría que colaboraras! 🎉
+```bash
+mvn package
+java -jar target/GCSW-P2-1.0-SNAPSHOT.jar
+```
 
-### ¿Cómo puedo ayudar?
-1. **Reportando errores** 🐛
-   - ¿Encontraste algo que no funciona? ¡Cuéntame!
-   - Ve a la sección de "Issues" y crea uno nuevo
-
-2. **Sugiriendo mejoras** 💡
-   - ¿Tienes una idea para hacerlo mejor? ¡Compártela!
-   - ¿Qué función te gustaría que tuviera?
-
-3. **Mejorando el código** 🔧
-   - Si sabes programar en Java, puedes ayudar directamente
-
-### Pasos para colaborar en el código:
-1. **Haz un "fork"** (copia) de este proyecto
-2. **Crea una rama** con tu mejora: `git checkout -b mi-mejora`
-3. **Haz tus cambios** y prueba que funcionen
-4. **Envía un "Pull Request"** (solicitud de cambios)
-5. ¡Revisaré tu contribución con gusto! ❤️
+La ventana principal de la aplicación se abrirá con cuatro tareas de ejemplo precargadas.
 
 ---
 
-## 📝 Algunas ideas para empezar a colaborar
+## Ejecutar las pruebas
 
-### Para principiantes:
-- ✨ **Mejorar los mensajes** de la aplicación
-- 🎨 **Cambiar colores** de la interfaz
-- 🔤 **Corregir errores de ortografía**
+```bash
+mvn test
+```
 
-### Para intermedios:
-- 💾 **Agregar guardado automático** (que las tareas no se pierdan)
-- 🔍 **Agregar búsqueda** (encontrar tareas rápidamente)
-- 📱 **Hacer la interfaz responsive** (que se vea bien en cualquier pantalla)
+Maven compilará el proyecto, ejecutará los tests en `AppTest.java` y generará el reporte en `target/surefire-reports/`. Las pruebas cubren tres operaciones críticas del `TaskManager`:
 
-### Para avanzados:
-- 🌐 **Agregar sincronización en la nube**
-- 📊 **Agregar gráficos de progreso**
-- 🤖 **Agregar recordatorios automáticos**
+| Test | Qué verifica |
+|---|---|
+| `testAddTask` | Que agregar una tarea incrementa correctamente el contador total |
+| `testMarkTaskCompleted` | Que una tarea puede marcarse como completada y el estado persiste |
+| `testRemoveTask` | Que eliminar una tarea por ID la remueve del listado y el contador se actualiza |
 
----
-
-## ❓ Preguntas frecuentes
-
-### ¿Necesito saber programar para usar la aplicación?
-¡**NO!** La aplicación está hecha para que cualquiera pueda usarla, sin importar si sabes programar o no.
-
-### ¿La aplicación es gratis?
-¡**SÍ!** Es completamente gratuita y de código abierto.
-
-### ¿Guarda mis tareas si cierro la aplicación?
-Actualmente no, pero ¡esa es una gran idea para implementar! ¿Quieres ayudar a agregar esta función?
-
-### ¿Funciona en Mac/Windows/Linux?
-¡Sí! Funciona en cualquier computadora que tenga Java instalado.
+Cada test parte desde un estado limpio gracias al método `@Before` que invoca `clearAllTasks()` antes de cada caso.
 
 ---
 
-## 📞 ¿Necesitas ayuda o tienes preguntas?
+## Funcionalidades principales
 
-- 📧 **Puedes abrir un "Issue"** en GitHub
-- 🤔 **Pregunta en la sección de discusiones**
-- ⭐ **¡Dale una estrella al proyecto si te gusta!**
-
----
-
-## 🙏 Agradecimientos
-
-¡Gracias por interesarte en este proyecto! Cada persona que lo usa, prueba, sugiere cambios o colabora hace que esta aplicación sea mejor día a día.
-
-**Recuerda:** Este proyecto fue creado con mucho cariño para ayudar a las personas a organizarse mejor. ¡Tú también puedes ser parte de esta misión!
+- **Agregar tareas**: formulario con título y descripción. Se genera un ID único con el formato `TASK-XXXXXXXX` basado en UUID.
+- **Completar tareas**: marcar una tarea seleccionada como terminada. El renderizador personalizado aplica un estilo visual diferenciado (tachado o color) para distinguir tareas completadas de pendientes.
+- **Eliminar tareas**: eliminar la tarea seleccionada de la lista.
+- **Ver detalles**: diálogo emergente (`TaskDetailDialog`) que muestra todos los atributos de una tarea: ID, título, descripción, estado y fecha/hora de creación formateada.
+- **Panel de estadísticas**: barra inferior con contadores en tiempo real de tareas totales, pendientes y completadas.
+- **Barra de menú**: acceso mediante menú `Archivo` y `Tareas` con atajos de teclado (`Ctrl+N` para nueva tarea, `Ctrl+Q` para salir).
+- **Limpiar todo**: opción para eliminar todas las tareas de la sesión actual.
 
 ---
 
-## 📄 Licencia
+## Estructura del proyecto
 
-Este proyecto es de código abierto y está disponible para que todos lo usen, modifiquen y compartan libremente. ¡El conocimiento debe ser libre!
+```
+Lista-de-Tareas/
+├── src/
+│   ├── main/
+│   │   └── java/org/wadr/
+│   │       ├── model/
+│   │       │   └── Task.java              # Entidad de dominio con UUID, título, descripción y estado
+│   │       ├── service/
+│   │       │   └── TaskManager.java       # Singleton thread-safe con toda la lógica de negocio
+│   │       ├── ui/
+│   │       │   ├── components/
+│   │       │   │   └── TaskListRenderer.java  # Renderizador personalizado de celdas JList
+│   │       │   ├── dialogs/
+│   │       │   │   └── TaskDetailDialog.java  # Diálogo de detalle de tarea
+│   │       │   ├── panels/
+│   │       │   │   ├── ControlPanel.java      # Panel de inputs y botones de acción
+│   │       │   │   └── StatusPanel.java       # Panel de estadísticas con contadores
+│   │       │   └── MainFrame.java             # JFrame principal con BorderLayout
+│   │       ├── utils/
+│   │       │   └── FormatterUtil.java         # Utilidades de formateo de fechas y textos
+│   │       └── App.java                       # Punto de entrada — inicia en el EDT
+│   └── test/
+│       └── java/org/wadr/
+│           └── AppTest.java                   # Pruebas unitarias JUnit 4 del TaskManager
+└── pom.xml                                    # Configuración Maven con dependencias y plugin JAR
+```
+
+---
+
+## Preguntas frecuentes
+
+**¿Por qué se usa `synchronized` en el método `getInstance()` de `TaskManager`?**
+Para garantizar que en un entorno multihilo solo se cree una instancia del Singleton. Aunque en esta aplicación Swing el acceso concurrente al gestor es mínimo, es una práctica correcta que demuestra conciencia sobre thread safety en Java.
+
+**¿Por qué las pruebas unitarias no testean la interfaz gráfica?**
+Porque `TaskManager` encapsula toda la lógica de negocio de forma completamente independiente de Swing. Esto es un beneficio directo de la separación en capas: los tests pueden verificar el comportamiento del núcleo de la aplicación sin necesidad de levantar ningún componente de UI, lo que los hace más rápidos y confiables.
+
+**¿Los datos se persisten entre sesiones?**
+No. El estado se mantiene únicamente en memoria (`List<Task>`) durante la ejecución. Al cerrar la aplicación, los datos se pierden. La extensión natural sería agregar una capa de persistencia con serialización a archivo o una base de datos embebida como H2 o SQLite.
+
+**¿Cómo se distinguen visualmente las tareas completadas?**
+El `TaskListRenderer` extiende `DefaultListCellRenderer` e intercepta el pintado de cada celda. Cuando una tarea tiene `isCompleted() == true`, aplica un estilo diferenciado (color de texto, decoración) para que el usuario identifique el estado de un vistazo sin necesidad de abrir el diálogo de detalle.
+
+**¿Qué formato tiene el ID de cada tarea?**
+Se genera con el prefijo `TASK-` seguido de los primeros 8 caracteres de un `UUID.randomUUID()`, resultando en identificadores como `TASK-a3f2b1c4`. Es suficientemente único para el alcance de la aplicación y más legible que un UUID completo.
+
+**¿Por qué se usa `SwingUtilities.invokeLater()` en `App.java`?**
+Swing no es thread-safe. Toda creación y modificación de componentes gráficos debe ejecutarse en el Event Dispatch Thread (EDT). `invokeLater()` encola la inicialización de `MainFrame` en ese hilo, siguiendo las buenas prácticas oficiales de la documentación de Java Swing.
+
+---
+
+## Autor
+
+**Walter Alejandro Duchi Rivera**
+
+Desarrollador Full Stack con experiencia en React, .NET y arquitecturas orientadas a eventos con WebSockets.
+
+- GitHub: [@WalterDuchi](https://github.com/Walter-Duchi)
+- LinkedIn: [linkedin.com/in/walter-duchi](https://www.linkedin.com/in/walter-duchi/)
+- Portafolio Profesional: [Walter Duchi](https://portafolio-theta-ten-87.vercel.app/)
+- Correo: [waltduchi@gmail.com](mailto:waltduchi@gmail.com)
+- WhatsApp: [+593 993 516 268](https://wa.me/593993516268)
+
+---
+
+*Proyecto desarrollado como parte del portafolio profesional.*
